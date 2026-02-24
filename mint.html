@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MintPath Pro | Sidebar CRM</title>
+    <style>
+        /* 1. THEME VARIABLES */
+        :root {
+            --mint-bg: #f2fdf5;
+            --mint-sidebar: #1b4332; /* Darker Green for Navigation */
+            --mint-accent: #40916c;
+            --mint-light: #d8f3dc;
+            --white: #ffffff;
+            --text-dark: #081c15;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            display: flex; /* This puts sidebar and content side-by-side */
+            height: 100vh;
+            background-color: var(--mint-bg);
+        }
+
+        /* 2. SIDEBAR (Navigation Board) */
+        .sidebar {
+            width: 250px;
+            background-color: var(--mint-sidebar);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 0;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 40px;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            padding: 15px 30px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            border-left: 4px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .nav-item.active {
+            background: rgba(255,255,255,0.2);
+            border-left: 4px solid var(--mint-light);
+        }
+
+        /* 3. MAIN CONTENT AREA */
+        .content {
+            flex: 1;
+            padding: 50px;
+            overflow-y: auto; /* Makes only the middle scroll */
+        }
+
+        /* 4. DESIGN PATTERN: THE TOP FORM */
+        .input-group {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 20px;
+            display: flex;
+            gap: 15px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        }
+
+        input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            outline: none;
+        }
+
+        .btn-save {
+            background: var(--mint-accent);
+            color: white;
+            border: none;
+            padding: 0 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* 5. THE ROW LIST */
+        .lead-row {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            border: 1px solid #eee;
+            cursor: pointer;
+            background: #f9f9f9;
+            color: #999;
+        }
+
+        .status-btn.active {
+            background: var(--mint-light);
+            color: var(--mint-sidebar);
+            border-color: var(--mint-accent);
+        }
+
+        .delete { color: #ff8a8a; cursor: pointer; font-weight: bold; margin-left: 15px;}
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>🌿 MINT PATH</h2>
+        <div class="nav-item active" onclick="switchTab('all', this)">All Leads</div>
+        <div class="nav-item" onclick="switchTab('New', this)">New Inquiries</div>
+        <div class="nav-item" onclick="switchTab('Contacted', this)">Follow-Ups</div>
+        <div class="nav-item" onclick="switchTab('Converted', this)">Closed Deals</div>
+    </div>
+
+    <div class="content">
+        <div id="pageTitle">
+            <h1 style="margin: 0;">Dashboard Overview</h1>
+            <p style="color: #666;">Manage your sales pipeline effectively.</p>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="nameIn" placeholder="Client Name">
+            <input type="email" id="emailIn" placeholder="Email Address">
+            <button class="btn-save" onclick="addLead()">Add Lead</button>
+        </div>
+
+        <div id="leadContainer">
+            </div>
+    </div>
+
+<script>
+    // 1. DATA (7 Fresh Names)
+    let myLeads = JSON.parse(localStorage.getItem('sidebarCRM')) || [
+        { name: "Suresh Raina", email: "suresh@cricket.in", status: "New" },
+        { name: "Aditi Rao", email: "aditi.r@fashion.co", status: "Contacted" },
+        { name: "Ishant Sharma", email: "ishant@delivery.com", status: "Converted" },
+        { name: "Kavya Iyer", email: "kavya@tech.org", status: "New" },
+        { name: "Manish Pandey", email: "manish@retail.in", status: "Contacted" },
+        { name: "Deepika Padukone", email: "deepika@film.in", status: "New" },
+        { name: "Virat Kohli", email: "virat@fitness.com", status: "Converted" }
+    ];
+
+    let currentFilter = 'all';
+
+    // 2. RENDER THE LIST
+    function render() {
+        const container = document.getElementById('leadContainer');
+        container.innerHTML = '';
+
+        myLeads.forEach((lead, index) => {
+            // Only show if it matches the filter (or if filter is 'all')
+            if (currentFilter === 'all' || lead.status === currentFilter) {
+                container.innerHTML += `
+                    <div class="lead-row">
+                        <div>
+                            <strong style="display:block;">${lead.name}</strong>
+                            <span style="font-size:12px; color:#888;">${lead.email}</span>
+                        </div>
+                        <div>
+                            <button class="status-btn ${lead.status === 'New' ? 'active' : ''}" onclick="changeStatus(${index}, 'New')">NEW</button>
+                            <button class="status-btn ${lead.status === 'Contacted' ? 'active' : ''}" onclick="changeStatus(${index}, 'Contacted')">CONTACTED</button>
+                            <button class="status-btn ${lead.status === 'Converted' ? 'active' : ''}" onclick="changeStatus(${index}, 'Converted')">CONVERTED</button>
+                            <span class="delete" onclick="remove(${index})">✕</span>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        localStorage.setItem('sidebarCRM', JSON.stringify(myLeads));
+    }
+
+    // 3. NAVIGATION LOGIC
+    function switchTab(status, element) {
+        currentFilter = status;
+        
+        // Change UI of Sidebar
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        element.classList.add('active');
+
+        // Update Title
+        document.querySelector('#pageTitle h1').innerText = status === 'all' ? 'Dashboard Overview' : status + ' Leads';
+        
+        render();
+    }
+
+    // 4. ADD / DELETE / UPDATE
+    function addLead() {
+        const n = document.getElementById('nameIn').value;
+        const e = document.getElementById('emailIn').value;
+        if(n && e) {
+            myLeads.unshift({ name: n, email: e, status: 'New' });
+            document.getElementById('nameIn').value = '';
+            document.getElementById('emailIn').value = '';
+            render();
+        }
+    }
+
+    function changeStatus(index, s) {
+        myLeads[index].status = s;
+        render();
+    }
+
+    function remove(index) {
+        myLeads.splice(index, 1);
+        render();
+    }
+
+    // Startup
+    render();
+</script>
+
+</body>
+</html>
